@@ -39,7 +39,6 @@ def attention(query, key, value, mask=None, dropout=None):
 class MultiHeadAttention(nn.Module):
     def __init__(self, h, d_model, dropout=0.1):
         """
-
         :param h: 多头的数量
         :param d_model: attention 的维度（多头维度叠加）
         :param dropout: dropout 系数
@@ -50,7 +49,7 @@ class MultiHeadAttention(nn.Module):
         self.h = h
         # 4个全连接层，其中三个用于 Q，K，V 向量，最后一个用于多头 Attention 输出部分
         self.linear_list = clones(nn.Linear(d_model, d_model), 4)
-        self.attn = None
+        self.attn = None  # 这个是得到的 attention 值
         self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, query, key, value, mask=None):
