@@ -93,8 +93,8 @@ class LayerNorm(nn.Module):
 
 
 class PositionwiseFeedForward(nn.Module):
-    def __int__(self, d_model, d_ff, dropout=0.1):
-        super(PositionwiseFeedForward, self).__int__()
+    def __init__(self, d_model, d_ff, dropout=0.1):
+        super(PositionwiseFeedForward, self).__init__()
         self.w_1 = nn.Linear(d_model, d_ff)
         self.w_2 = nn.Linear(d_ff, d_model)
         self.dropout = nn.Dropout(p=dropout)
@@ -108,8 +108,8 @@ class SublayerConnection(nn.Module):
     先是残差 residual 操作，接着是 layer norm 操作
     但是这里为了代码简单，norm 放在前面而不是最后
     """
-    def __int__(self, size, dropout):
-        super(SublayerConnection, self).__int__()
+    def __init__(self, size, dropout):
+        super(SublayerConnection, self).__init__()
         self.norm = LayerNorm(size)
         self.dropout = nn.Dropout(p=dropout)
 
