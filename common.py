@@ -101,3 +101,24 @@ class PositionwiseFeedForward(nn.Module):
 
     def forward(self, x):
         return self.w_2(self.dropout(self.w_1(x).relu()))
+
+
+class SublayerConnection(nn.Module):
+    """
+    先是残差 residual 操作，接着是 layer norm 操作
+    但是这里为了代码简单，norm 放在前面而不是最后
+    """
+    def __int__(self, size, dropout):
+        super(SublayerConnection, self).__int__()
+        self.norm = LayerNorm(size)
+        self.dropout = nn.Dropout(p=dropout)
+
+    def forward(self, x, sublayer):
+        """
+        针对不同的子层，都可以套用这个类，来添加残差和 layer norm 层
+        这里子层主要有两个，多头 Attention 层 和 PositionwiseFeedForward 层
+        :param x: 要处理的数据
+        :param sublayer: 子层
+        :return: 
+        """
+        return x + self.dropout(sublayer(self.norm(x)))
