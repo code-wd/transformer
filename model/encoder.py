@@ -1,7 +1,7 @@
 from torch import nn
 
 from utils import clones
-from common import SublayerConnection, LayerNorm
+from model.common import SublayerConnection, LayerNorm
 
 
 class EncoderLayer(nn.Module):

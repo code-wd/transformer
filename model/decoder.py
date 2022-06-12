@@ -1,7 +1,8 @@
+import torch
 from torch import nn
 
 from utils import clones
-from common import SublayerConnection, LayerNorm
+from model.common import SublayerConnection, LayerNorm
 
 
 class DecoderLayer(nn.Module):
@@ -41,3 +42,15 @@ class Decoder(nn.Module):
         for layer in self.layers:
             x = layer(x, memory, src_mask, target_mask)
         return self.norm
+
+
+def subsequent_mask(size):
+    """
+    这里使用了上三角函数，用来生成在 DecoderLayer 中用到的 Mask Attention 的 Mask
+    这个就是 target_mask
+    :param size:
+    :return:
+    """
+    attn_shape = (1, size, size)
+    mask = torch.triu(torch.ones(attn_shape), diagonal=1).type(torch.uint8)
+    return mask == 0
