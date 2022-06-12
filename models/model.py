@@ -5,9 +5,9 @@ import torch
 from torch import nn
 from torch.nn.functional import log_softmax
 
-from model.common import MultiHeadAttention, PositionwiseFeedForward
-from model.encoder import Encoder, EncoderLayer
-from model.decoder import Decoder, DecoderLayer
+from models.common import MultiHeadAttention, PositionwiseFeedForward
+from models.encoder import Encoder, EncoderLayer
+from models.decoder import Decoder, DecoderLayer
 
 
 class EncoderDecoder(nn.Module):

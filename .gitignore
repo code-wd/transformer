@@ -1,1 +1,5 @@
 .idea
+temp.py
+ckpt
+__pycache__
+models/__pycache__

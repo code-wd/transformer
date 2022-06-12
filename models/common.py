@@ -7,7 +7,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from utils import clones
+from models.utils import clones
 
 
 def attention(query, key, value, mask=None, dropout=None):
@@ -60,7 +60,7 @@ class MultiHeadAttention(nn.Module):
 
         # 1. linear projection 操作（相当于 weights）
         query, key, value = [
-            linear_layer(x).view(batch_num, -1, self.h, self.d_k)
+            linear_layer(x).view(batch_num, -1, self.h, self.d_k).transpose(1, 2)
             for linear_layer, x in zip(self.linear_list, (query, key, value))
         ]
 
