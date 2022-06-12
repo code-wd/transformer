@@ -11,8 +11,8 @@ class EncoderLayer(nn.Module):
     但是这两个子层是要 SubLayerConnection 层包裹起来，即增加了残差和 LayerNorm
     """
 
-    def __int__(self, size, self_attn, feed_forward, dropout):
-        super(EncoderLayer, self).__int__()
+    def __init__(self, size, self_attn, feed_forward, dropout):
+        super(EncoderLayer, self).__init__()
         self.attn = self_attn
         self.feed_forward = feed_forward
         # encoder 中包含两个子层，因此，这里复制了两个连接部分
