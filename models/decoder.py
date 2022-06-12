@@ -25,7 +25,7 @@ class DecoderLayer(nn.Module):
     def forward(self, x, memory, src_mask, target_mask):
         m = memory
         x = self.sublayers[0](x, lambda t: self.self_attn(t, t, t, target_mask))
-        x = self.sublayers[1](x, lambda t: self.src_attn(x, m, m, src_mask))
+        x = self.sublayers[1](x, lambda t: self.src_attn(t, m, m, src_mask))
         return self.sublayers[2](x, self.feed_forward)
 
 

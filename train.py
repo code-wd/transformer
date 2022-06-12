@@ -2,10 +2,12 @@ import time
 
 import torch
 from torch import nn
+import numpy as np
+from torch.autograd import Variable
 
 import config
 from models.model import make_model
-from preprocess import PrepareData
+from preprocess import PrepareData, subsequent_mask
 
 
 class LabelSmoothing(nn.Module):
@@ -159,3 +161,91 @@ if __name__ == '__main__':
 
     train(data, model, criterion, optimizer)
     print(f"<<<<<<< finished train, cost {time.time() - train_start:.4f} seconds")
+
+
+# %% 6. Prediction with English-to-Chinese Translator
+
+def greedy_decode(model, src, src_mask, max_len, start_symbol):
+    """
+    Translate src with model
+    """
+    # decode the src
+    memory = model.encode(src, src_mask)
+    # init 1×1 tensor as prediction，fill in ('BOS')id, type: (LongTensor)
+    ys = torch.ones(1, 1).fill_(start_symbol).type_as(src.data)
+    #  run 遍历输出的长度下标
+    for i in range(max_len-1):
+        # decode one by one
+        out = model.decode(memory,
+                           src_mask,
+                           Variable(ys),
+                           Variable(subsequent_mask(ys.size(1)).type_as(src.data)))
+        #  out to log_softmax
+        prob = model.generator(out[:, -1])
+        #  get the max-prob id
+        _, next_word = torch.max(prob, dim=1)
+        next_word = next_word.data[0]
+        #  concatnate with early predictions
+        ys = torch.cat([ys, torch.ones(1, 1).type_as(
+            src.data).fill_(next_word)], dim=1)
+    return ys
+
+
+# English to Chinese Translations
+
+def evaluate(data, model):
+    """
+    Make prediction with trained model, and print results.
+    """
+    with torch.no_grad():
+        #  pick some random sentences from dev data.
+        for i in np.random.randint(len(data.dev_en), size=10):
+            # Print English sentence
+            en_sent = " ".join([data.en_index_dict[w] for w in data.dev_en[i]])
+            print("\n" + en_sent)
+
+            # Print Target Chinese sentence
+            cn_sent = " ".join([data.cn_index_dict[w] for w in data.dev_cn[i]])
+            print("".join(cn_sent))
+
+            # conver English to tensor
+            src = torch.from_numpy(np.array(data.dev_en[i])).long().to(config.DEVICE)
+            src = src.unsqueeze(0)
+            # set attention mask
+            src_mask = (src != 0).unsqueeze(-2)
+            # apply model to decode, make prediction
+            out = greedy_decode(
+                model, src, src_mask, max_len=config.MAX_LENGTH, start_symbol=data.cn_word_dict["BOS"])
+            # save all in the translation list
+            translation = []
+            # convert id to Chinese, skip 'BOS' 0.
+            # 遍历翻译输出字符的下标（注意：跳过开始符"BOS"的索引 0）
+            for j in range(1, out.size(1)):
+                sym = data.cn_index_dict[out[0, j].item()]
+                if sym != 'EOS':
+                    translation.append(sym)
+                else:
+                    break
+            print("translation: {}".format(" ".join(translation)))
+
+
+# **English to Chinese Translator**
+
+# Predition
+model.load_state_dict(torch.load(config.SAVE_FILE))
+print(">>>>>>> start evaluate")
+evaluate_start = time.time()
+evaluate(data, model)
+print(
+    f"<<<<<<< finished evaluate, cost {time.time()-evaluate_start:.4f} seconds")
+
+
+# Here is my pretrained model with CUDA support
+if config.DEVICE == "cuda":
+    SAVE_FILE_EXTRA = 'save/models/large_model.pt'
+    model.load_state_dict(torch.load(SAVE_FILE_EXTRA))
+    print(">>>>>>> start evaluate")
+    evaluate_start = time.time()
+    evaluate(data, model)
+    print(
+        f"<<<<<<< finished evaluate, cost {time.time()-evaluate_start:.4f} seconds")

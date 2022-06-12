@@ -3,6 +3,7 @@ import math
 
 import torch
 from torch import nn
+from torch.autograd import Variable
 from torch.nn.functional import log_softmax
 
 from models.common import MultiHeadAttention, PositionwiseFeedForward
@@ -41,7 +42,7 @@ class Generator(nn.Module):
         :param x:
         :return:
         """
-        return log_softmax(self.proj(x), dim=1)
+        return log_softmax(self.proj(x), dim=-1)
 
 
 class Embeddings(nn.Module):
@@ -64,13 +65,14 @@ class PositionalEncoding(nn.Module):
         div_term = torch.exp(
             torch.arange(0, d_model, 2) * -(math.log(10000.0) / d_model)
         )
-        pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
+        pe_pos = torch.mul(position, div_term)
+        pe[:, 0::2] = torch.sin(pe_pos)
+        pe[:, 1::2] = torch.cos(pe_pos)
         pe = pe.unsqueeze(0)
         self.register_buffer('pe', pe)
 
     def forward(self, x):
-        x = x + self.pe[:, :x.size(1)].requires_grad_(False)
+        x = x + Variable(self.pe[:, :x.size(1)], requires_grad=False)
         return self.dropout(x)
 
 
@@ -91,6 +93,6 @@ def make_model(src_vocab, tgt_vocab, N=6, d_model=512, d_ff=2048, h=8, dropout=0
     # 参数初始化
     for p in transformer.parameters():
         if p.dim() > 1:
-            nn.init.xavier_uniform(p)
+            nn.init.xavier_uniform_(p)
     return transformer
 

@@ -69,7 +69,7 @@ class MultiHeadAttention(nn.Module):
 
         # 3. 多头之间 concat 操作，并通过最后的 linear 层
         x = (
-            x.transpose(1, 2).contiguous().view(batch_num, -1, self.h*self.d_k)
+            x.transpose(1, 2).contiguous().view(batch_num, -1, self.h * self.d_k)
         )
         del query
         del key
@@ -89,7 +89,8 @@ class LayerNorm(nn.Module):
     def forward(self, x):
         mean = x.mean(-1, keepdim=True)
         std = x.std(-1, keepdim=True)
-        return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
+        x_zscore = (x - mean) / torch.sqrt(std ** 2 + self.eps)
+        return self.a_2 * x_zscore + self.b_2
 
 
 class PositionwiseFeedForward(nn.Module):
@@ -100,7 +101,9 @@ class PositionwiseFeedForward(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
 
     def forward(self, x):
-        return self.w_2(self.dropout(self.w_1(x).relu()))
+        h1 = self.w_1(x)
+        h2 = self.dropout(h1)
+        return self.w_2(h2)
 
 
 class SublayerConnection(nn.Module):
@@ -108,6 +111,7 @@ class SublayerConnection(nn.Module):
     先是残差 residual 操作，接着是 layer norm 操作
     但是这里为了代码简单，norm 放在前面而不是最后
     """
+
     def __init__(self, size, dropout):
         super(SublayerConnection, self).__init__()
         self.norm = LayerNorm(size)
